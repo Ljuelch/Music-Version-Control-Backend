@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model tproject {
+  id              Int               @id @default(autoincrement()) @db.UnsignedInt
+  name            String            @db.VarChar(255)
+  tprojectuser    tprojectuser[]
+  tprojectversion tprojectversion[]
+}
+
+model tprojectuser {
+  id         Int       @id @default(autoincrement()) @db.UnsignedInt
+  user_id    Int?      @db.UnsignedInt
+  project_id Int?      @db.UnsignedInt
+  role       String    @db.Char(1)
+  tuser      tuser?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectuser_ibfk_1")
+  tproject   tproject? @relation(fields: [project_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectuser_ibfk_2")
+
+  @@index([project_id], map: "project_id")
+  @@index([user_id], map: "user_id")
+}
+
+model tprojectversion {
+  id                                                                            Int                         @id @default(autoincrement()) @db.UnsignedInt
+  project_id                                                                    Int?                        @db.UnsignedInt
+  versionNumber                                                                 Int                         @db.UnsignedInt
+  timestamp                                                                     DateTime?                   @default(now()) @db.Timestamp(0)
+  songBPM                                                                       Int?                        @db.UnsignedSmallInt
+  songKey                                                                       String?                     @db.VarChar(10)
+  tprojectchecklist_tprojectchecklist_projectversionIdTotprojectversion         tprojectchecklist[]         @relation("tprojectchecklist_projectversionIdTotprojectversion")
+  tprojectchecklist_tprojectchecklist_checkedProjectversion_idTotprojectversion tprojectchecklist[]         @relation("tprojectchecklist_checkedProjectversion_idTotprojectversion")
+  tproject                                                                      tproject?                   @relation(fields: [project_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectversion_ibfk_1")
+  tprojectversionfile                                                           tprojectversionfile[]
+  tprojectversionstemsgroup                                                     tprojectversionstemsgroup[]
+
+  @@unique([project_id, versionNumber], map: "project_id")
+}
+
+model tsession {
+  session   String    @id @db.Char(64)
+  user_id   Int?      @db.UnsignedInt
+  timestamp DateTime? @default(now()) @db.Timestamp(0)
+  tuser     tuser?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tsession_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model tuser {
+  id                                           Int                       @id @default(autoincrement()) @db.UnsignedInt
+  email                                        String                    @db.VarChar(255)
+  password                                     String                    @db.VarChar(255)
+  username                                     String                    @db.VarChar(255)
+  firstname                                    String?                   @db.VarChar(255)
+  lastname                                     String?                   @db.VarChar(255)
+  public                                       Boolean                   @default(true)
+  blocked                                      Boolean                   @default(true)
+  tprojectchecklist                            tprojectchecklist[]
+  tprojectchecklistmarker                      tprojectchecklistmarker[]
+  tprojectuser                                 tprojectuser[]
+  tsession                                     tsession[]
+  tuserfollow_tuserfollow_user_idTotuser       tuserfollow[]             @relation("tuserfollow_user_idTotuser")
+  tuserfollow_tuserfollow_followUser_idTotuser tuserfollow[]             @relation("tuserfollow_followUser_idTotuser")
+  tuserresetpassword                           tuserresetpassword[]
+}
+
+model tprojectversionfile {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  hash                 String?                @db.Char(128)
+  projectversion_id    Int?                   @db.UnsignedInt
+  type                 String?                @db.Char(3)
+  tprojectversion      tprojectversion?       @relation(fields: [projectversion_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectversionfile_ibfk_1")
+  tprojectversionstems tprojectversionstems[]
+
+  @@index([projectversion_id], map: "projectversion_id")
+}
+
+model tprojectversionstemsgroup {
+  id                   Int                    @id @default(autoincrement()) @db.UnsignedInt
+  projectversion_id    Int?                   @db.UnsignedInt
+  name                 String?                @db.VarChar(255)
+  tprojectversionstems tprojectversionstems[]
+  tprojectversion      tprojectversion?       @relation(fields: [projectversion_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectversionstemsgroup_ibfk_1")
+
+  @@index([projectversion_id], map: "projectversion_id")
+}
+
+model tprojectchecklist {
+  id                                                                          Int                       @id @default(autoincrement()) @db.UnsignedInt
+  projectversionId                                                            Int?                      @db.UnsignedInt
+  user_id                                                                     Int?                      @db.UnsignedInt
+  timestamp                                                                   DateTime?                 @default(now()) @db.Timestamp(0)
+  text                                                                        String                    @db.VarChar(255)
+  checkedProjectversion_id                                                    Int?                      @db.UnsignedInt
+  rejected                                                                    Boolean?
+  tuser                                                                       tuser?                    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectchecklist_ibfk_1")
+  tprojectversion_tprojectchecklist_projectversionIdTotprojectversion         tprojectversion?          @relation("tprojectchecklist_projectversionIdTotprojectversion", fields: [projectversionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectchecklist_ibfk_2")
+  tprojectversion_tprojectchecklist_checkedProjectversion_idTotprojectversion tprojectversion?          @relation("tprojectchecklist_checkedProjectversion_idTotprojectversion", fields: [checkedProjectversion_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectchecklist_ibfk_3")
+  tprojectchecklistmarker                                                     tprojectchecklistmarker[]
+
+  @@index([checkedProjectversion_id], map: "checkedProjectversion_id")
+  @@index([projectversionId], map: "projectversionId")
+  @@index([user_id], map: "user_id")
+}
+
+model tprojectversionstems {
+  id                         Int                        @id @default(autoincrement()) @db.UnsignedInt
+  projectversionfile_id      Int?                       @db.UnsignedInt
+  projectversionstemgroup_id Int?                       @db.UnsignedInt
+  name                       String?                    @db.VarChar(255)
+  type                       String?                    @db.Char(3)
+  tprojectversionfile        tprojectversionfile?       @relation(fields: [projectversionfile_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectversionstems_ibfk_1")
+  tprojectversionstemsgroup  tprojectversionstemsgroup? @relation(fields: [projectversionstemgroup_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectversionstems_ibfk_2")
+
+  @@index([projectversionfile_id], map: "projectversionfile_id")
+  @@index([projectversionstemgroup_id], map: "projectversionstemgroup_id")
+}
+
+model tuserfollow {
+  id                                     Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id                                Int?   @db.UnsignedInt
+  followUser_id                          Int?   @db.UnsignedInt
+  tuser_tuserfollow_user_idTotuser       tuser? @relation("tuserfollow_user_idTotuser", fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tuserfollow_ibfk_1")
+  tuser_tuserfollow_followUser_idTotuser tuser? @relation("tuserfollow_followUser_idTotuser", fields: [followUser_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tuserfollow_ibfk_2")
+
+  @@index([followUser_id], map: "followUser_id")
+  @@index([user_id], map: "user_id")
+}
+
+model tusernotification {
+  id                     Int                      @id @default(autoincrement()) @db.UnsignedInt
+  user_id                Int?                     @db.UnsignedInt
+  notificationTemplateId Int?                     @db.UnsignedSmallInt
+  timestamp              DateTime?                @default(now()) @db.Timestamp(0)
+  isRead                 Boolean?                 @default(false)
+  tusernotificationparam tusernotificationparam[]
+}
+
+model tusernotificationparam {
+  id                Int                @id @default(autoincrement()) @db.UnsignedInt
+  notification_id   Int?               @db.UnsignedInt
+  paramKey          String?            @db.VarChar(100)
+  paramValue        String?            @db.VarChar(255)
+  tusernotification tusernotification? @relation(fields: [notification_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tusernotificationparam_ibfk_1")
+
+  @@index([notification_id], map: "notification_id")
+}
+
+model tuserresetpassword {
+  resetKey  String    @id @db.Char(32)
+  user_id   Int?      @db.UnsignedInt
+  isPrivate Boolean
+  timestamp DateTime? @default(now()) @db.Timestamp(0)
+  tuser     tuser?    @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tuserresetpassword_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model tprojectchecklistmarker {
+  id                  Int                @id @default(autoincrement()) @db.UnsignedInt
+  projectchecklist_id Int?               @db.UnsignedInt
+  user_id             Int?               @db.UnsignedInt
+  color               String             @db.Char(6)
+  start               Decimal            @db.Decimal(5, 1)
+  end                 Decimal?           @db.Decimal(5, 1)
+  tuser               tuser?             @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectchecklistmarker_ibfk_1")
+  tprojectchecklist   tprojectchecklist? @relation(fields: [projectchecklist_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "tprojectchecklistmarker_ibfk_2")
+
+  @@index([projectchecklist_id], map: "projectchecklist_id")
+  @@index([user_id], map: "user_id")
+}

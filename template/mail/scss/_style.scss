@@ -1,0 +1,16 @@
+@import 'abstract/vars';
+
+* {
+  color: $text-color;
+  font-family: $text-family;
+}
+
+body {
+  margin: 0;
+
+  @import 'partials/header';
+  @import 'partials/main';
+  @import 'partials/footer';
+
+  // template imports
+}

@@ -1,0 +1,11 @@
+@import '../abstract/vars';
+
+header {
+  background: $foreground;
+  box-shadow: $shadow;
+  padding: 16px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 24px;
+  user-select: none;
+}

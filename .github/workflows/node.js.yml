@@ -1,0 +1,54 @@
+name: Node.js CI BE
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+#   strategy:
+#     matrix:
+#       node-version: [18.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+      # Use already installed node and npm
+#   - name: Use Node.js ${{ matrix.node-version }}
+#     uses: actions/setup-node@v3
+#     with:
+#       node-version: ${{ matrix.node-version }}
+#       cache: 'npm'
+
+    - name: Stop pm2 Application
+      run: ./pm2.sh stop
+
+    - name: Setup Environment Files
+      run: |
+        echo "${{ secrets.SETUP_ENV }}" > /home/truncate/Truncate-Live/Truncate2023-BE/Truncate2023-BE/.env
+        echo -n '${{ secrets.GOOGLE_CLOUD_STORAGE_KEY }}' > /home/truncate/Truncate-Live/Truncate2023-BE/Truncate2023-BE/truncate-cloud-storage.key.json
+        echo "" >> /home/truncate/Truncate-Live/Truncate2023-BE/Truncate2023-BE/.env
+        echo "GOOGLE_STORAGE_KEYFILE=truncate-cloud-storage.key.json" >> /home/truncate/Truncate-Live/Truncate2023-BE/Truncate2023-BE/.env
+
+    - name: Install Dependencies
+      run: npm i
+
+    - name: Compile Mail Template SCSS
+      run: npm run sass:mail
+
+    - name: Migrate Database
+      run: npm run migrate
+
+    - name: Pull DB
+      run: npx prisma db pull
+
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
+    - name: Build Nest.js Application
+      run: npm run build
+
+    - name: Start pm2 Application
+      run: ./pm2.sh start
